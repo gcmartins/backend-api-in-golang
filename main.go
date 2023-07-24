@@ -3,11 +3,12 @@ package main
 import (
 	"MileTravel/routes"
 	"fmt"
+	"log"
 	"net/http"
 )
 
 func main() {
 	fmt.Println("Starting server...")
-	routes.LoadRoutes()
-	http.ListenAndServe(":8000", nil)
+	router := routes.LoadRouter()
+	log.Fatal(http.ListenAndServe(":8000", router))
 }

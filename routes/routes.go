@@ -2,10 +2,14 @@ package routes
 
 import (
 	"MileTravel/controllers"
-	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
-func LoadRoutes() {
-	http.HandleFunc("/", controllers.Index)
-	http.HandleFunc("/testimonials", controllers.Testimonials)
+func LoadRouter() *mux.Router {
+	r := mux.NewRouter()
+	r.HandleFunc("/", controllers.Index)
+	r.HandleFunc("/api/testimonials", controllers.Testimonials)
+
+	return r
 }
