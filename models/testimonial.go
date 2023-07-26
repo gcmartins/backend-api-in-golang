@@ -1,6 +1,6 @@
 package models
 
-type Testimony struct {
+type Testimonial struct {
 	Id          int    `json:"id"`
 	User        string `json:"user"`
 	Image       string `json:"image"`
