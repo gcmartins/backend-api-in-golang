@@ -3,17 +3,17 @@ package routes
 import (
 	"MileTravel/controllers"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
-func LoadRouter() *mux.Router {
-	r := mux.NewRouter()
-	r.HandleFunc("/", controllers.Index)
-	r.HandleFunc("/api/testimonials", controllers.Testimonials).Methods("Get")
-	r.HandleFunc("/api/testimonials", controllers.CreateTestimonial).Methods("Post")
-	r.HandleFunc("/api/testimonials/{id}", controllers.TestimonialById).Methods("Get")
-	r.HandleFunc("/api/testimonials/{id}", controllers.DeleteTestimonial).Methods("Delete")
-	r.HandleFunc("/api/testimonials/{id}", controllers.UpdateTestimonial).Methods("Put")
+func LoadRouter() *gin.Engine {
+	r := gin.Default()
+	r.GET("/", controllers.Index)
+	r.GET("/api/testimonials", controllers.Testimonials)
+	r.POST("/api/testimonials", controllers.CreateTestimonial)
+	r.GET("/api/testimonials/:id", controllers.TestimonialById)
+	r.DELETE("/api/testimonials/:id", controllers.DeleteTestimonial)
+	r.PUT("/api/testimonials/:id", controllers.UpdateTestimonial)
 
 	return r
 }

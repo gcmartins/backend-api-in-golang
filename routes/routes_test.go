@@ -1,31 +1,24 @@
 package routes_test
 
 import (
-	"MileTravel/controllers"
+	"MileTravel/routes"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIndexRoute(t *testing.T) {
-	req, err := http.NewRequest(http.MethodGet, "/", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	router := routes.LoadRouter()
+	req, _ := http.NewRequest(http.MethodGet, "/", nil)
 
 	res := httptest.NewRecorder()
-	handler := http.HandlerFunc(controllers.Index)
 
-	handler.ServeHTTP(res, req)
+	router.ServeHTTP(res, req)
 
-	expected_output := "Home"
+	expected_output := `{"message":"Home"}`
 
-	if res.Code != http.StatusOK {
-		t.Error("expected", http.StatusOK, "got", res.Code)
-	}
-
-	if res.Body.String() != expected_output {
-		t.Error("expected", expected_output, "got", res.Body.String())
-	}
-
+	assert.Equal(t, http.StatusOK, res.Code)
+	assert.Equal(t, expected_output, res.Body.String())
 }

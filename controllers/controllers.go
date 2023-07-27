@@ -3,57 +3,62 @@ package controllers
 import (
 	"MileTravel/database"
 	"MileTravel/models"
-	"encoding/json"
-	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
-func Index(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Home")
+func Index(c *gin.Context) {
+	c.JSON(200, gin.H{
+		"message": "Home",
+	})
 }
 
-func Testimonials(w http.ResponseWriter, r *http.Request) {
+func Testimonials(c *gin.Context) {
 	var testimonials []models.Testimonial
 	database.DB.Find(&testimonials)
 
-	json.NewEncoder(w).Encode(testimonials)
+	c.JSON(http.StatusOK, testimonials)
 
 }
 
-func getVarFromPath(r *http.Request, varName string) string {
-	vars := mux.Vars(r)
-	value := vars[varName]
-	return value
-}
-
-func TestimonialById(w http.ResponseWriter, r *http.Request) {
-	id := getVarFromPath(r, "id")
+func TestimonialById(c *gin.Context) {
+	id := c.Params.ByName("id")
 	var testimonial models.Testimonial
 	database.DB.First(&testimonial, id)
-	json.NewEncoder(w).Encode(testimonial)
+	c.JSON(http.StatusOK, testimonial)
 }
 
-func CreateTestimonial(w http.ResponseWriter, r *http.Request) {
+func CreateTestimonial(c *gin.Context) {
 	var testimonial models.Testimonial
-	json.NewDecoder(r.Body).Decode(&testimonial)
+	err := c.ShouldBindJSON(&testimonial)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error()})
+		return
+	}
 	database.DB.Create(&testimonial)
-	json.NewEncoder(w).Encode(testimonial)
+	c.JSON(http.StatusOK, testimonial)
 }
 
-func DeleteTestimonial(w http.ResponseWriter, r *http.Request) {
-	id := getVarFromPath(r, "id")
+func DeleteTestimonial(c *gin.Context) {
+	id := c.Params.ByName("id")
 	var testimonial models.Testimonial
 	database.DB.Delete(&testimonial, id)
-	json.NewEncoder(w).Encode(testimonial)
+	c.JSON(http.StatusOK, testimonial)
 }
 
-func UpdateTestimonial(w http.ResponseWriter, r *http.Request) {
-	id := getVarFromPath(r, "id")
+func UpdateTestimonial(c *gin.Context) {
+	id := c.Params.ByName("id")
 	var testimonial models.Testimonial
 	database.DB.First(&testimonial, id)
-	json.NewDecoder(r.Body).Decode(&testimonial)
+
+	if err := c.ShouldBindJSON(&testimonial); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error()})
+		return
+	}
+
 	database.DB.Save(&testimonial)
-	json.NewEncoder(w).Encode(testimonial)
+	c.JSON(http.StatusOK, testimonial)
 }
