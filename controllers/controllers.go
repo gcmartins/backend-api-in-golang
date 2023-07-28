@@ -26,6 +26,11 @@ func TestimonialById(c *gin.Context) {
 	id := c.Params.ByName("id")
 	var testimonial models.Testimonial
 	database.DB.First(&testimonial, id)
+	if testimonial.Id == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "Resource not found."})
+		return
+	}
 	c.JSON(http.StatusOK, testimonial)
 }
 
@@ -45,13 +50,20 @@ func DeleteTestimonial(c *gin.Context) {
 	id := c.Params.ByName("id")
 	var testimonial models.Testimonial
 	database.DB.Delete(&testimonial, id)
-	c.JSON(http.StatusOK, testimonial)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Resource deleted."})
 }
 
 func UpdateTestimonial(c *gin.Context) {
 	id := c.Params.ByName("id")
 	var testimonial models.Testimonial
 	database.DB.First(&testimonial, id)
+
+	if testimonial.Id == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "Resource not found."})
+		return
+	}
 
 	if err := c.ShouldBindJSON(&testimonial); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
