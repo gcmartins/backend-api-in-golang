@@ -6,12 +6,18 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-func Index(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"message": "Home",
+func TestimonialsHome(c *gin.Context) {
+	testimonials := []models.Testimonial{}
+
+	sql := database.DB.ToSQL(func(tx *gorm.DB) *gorm.DB {
+		return tx.Model(&models.Testimonial{}).Order("random()").Limit(3).Find(&testimonials)
 	})
+
+	database.DB.Raw(sql).Scan(&testimonials)
+	c.JSON(200, testimonials)
 }
 
 func Testimonials(c *gin.Context) {

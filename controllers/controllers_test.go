@@ -8,41 +8,41 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIndexRoute(t *testing.T) {
-	router := routes.LoadRouter()
-	req, _ := http.NewRequest(http.MethodGet, "/", nil)
-
-	res := httptest.NewRecorder()
-
-	router.ServeHTTP(res, req)
-
-	expected_output := `{"message":"Home"}`
-
-	assert.Equal(t, http.StatusOK, res.Code)
-	assert.Equal(t, expected_output, res.Body.String())
-}
-
-func loadDatabase() {
-	testimonials := []models.Testimonial{
-		{User: "User1", Image: "Image1", Description: "Description1"},
-		{User: "User2", Image: "Image2", Description: "Description2"},
-	}
-
-	for _, testimonial := range testimonials {
+func loadDatabase(rows int) {
+	for i := 1; i <= rows; i++ {
+		testimonial := models.Testimonial{
+			User:        "User" + strconv.Itoa(i),
+			Image:       "Image" + strconv.Itoa(i),
+			Description: "Description" + strconv.Itoa(i),
+		}
 		database.DB.Create(&testimonial)
 	}
 }
 
 func TestTestimonials(t *testing.T) {
 	database.TestDbConfig()
-	loadDatabase()
+	loadDatabase(10)
 	defer database.ClearTestDb()
 	router := routes.LoadRouter()
+
+	t.Run("Retrieve All Testimonials", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodGet, "/api/testimonials", nil)
+		res := httptest.NewRecorder()
+		router.ServeHTTP(res, req)
+
+		var testimonials []models.Testimonial
+
+		json.Unmarshal(res.Body.Bytes(), &testimonials)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, 10, len(testimonials))
+	})
 
 	t.Run("Create Testimonial", func(t *testing.T) {
 		expectedTestimonial := models.Testimonial{User: "John", Image: "Image 1", Description: "Description 1"}
@@ -124,6 +124,28 @@ func TestTestimonials(t *testing.T) {
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
 		assert.Equal(t, `{"message":"Resource not found."}`, res.Body.String())
+	})
+
+	t.Run("Retrieve Testimonial Home", func(t *testing.T) {
+		parseTestimonials := func(res *httptest.ResponseRecorder, req *http.Request) []models.Testimonial {
+			router.ServeHTTP(res, req)
+			var testimonials []models.Testimonial
+			json.Unmarshal(res.Body.Bytes(), &testimonials)
+			return testimonials
+		}
+
+		req, _ := http.NewRequest(http.MethodGet, "/api/testimonials-home", nil)
+		res := httptest.NewRecorder()
+		testimonials := parseTestimonials(res, req)
+		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, 3, len(testimonials))
+
+		res2 := httptest.NewRecorder()
+		testimonials2 := parseTestimonials(res2, req)
+		assert.Equal(t, http.StatusOK, res2.Code)
+		assert.Equal(t, 3, len(testimonials2))
+
+		assert.NotEqualValues(t, testimonials, testimonials2)
 	})
 
 }
