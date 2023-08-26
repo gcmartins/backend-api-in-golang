@@ -3,7 +3,11 @@ package controllers
 import (
 	"MileTravel/database"
 	"MileTravel/models"
+	"MileTravel/storage"
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -41,8 +45,32 @@ func TestimonialById(c *gin.Context) {
 }
 
 func CreateTestimonial(c *gin.Context) {
+	err := c.Request.ParseMultipartForm(10 << 20)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	uploadsPath := storage.GetStoragePath()
+
+	fmt.Println(uploadsPath)
+
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	filePath := filepath.Join(uploadsPath, file.Filename)
+	err = c.SaveUploadedFile(file, filePath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	var testimonial models.Testimonial
-	err := c.ShouldBindJSON(&testimonial)
+
+	testimonialJson := c.Request.FormValue("json")
+	err = json.Unmarshal([]byte(testimonialJson), &testimonial)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error()})

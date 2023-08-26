@@ -4,10 +4,14 @@ import (
 	"MileTravel/database"
 	"MileTravel/models"
 	"MileTravel/routes"
+	"MileTravel/storage"
 	"bytes"
 	"encoding/json"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"testing"
 
@@ -30,6 +34,8 @@ func TestTestimonials(t *testing.T) {
 	loadDatabase(10)
 	defer database.ClearTestDb()
 	router := routes.LoadRouter()
+	storage.SetupTestStorage()
+	defer storage.ClearTestStorage()
 
 	t.Run("Retrieve All Testimonials", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodGet, "/api/testimonials", nil)
@@ -47,7 +53,23 @@ func TestTestimonials(t *testing.T) {
 	t.Run("Create Testimonial", func(t *testing.T) {
 		expectedTestimonial := models.Testimonial{User: "John", Image: "Image 1", Description: "Description 1"}
 		testimonialJson, _ := json.Marshal(expectedTestimonial)
-		req, _ := http.NewRequest(http.MethodPost, "/api/testimonials", bytes.NewBuffer(testimonialJson))
+
+		imageFile, _ := os.Open("../foto.jpg")
+		defer imageFile.Close()
+
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+
+		jsonPart, _ := writer.CreateFormField("json")
+		jsonPart.Write(testimonialJson)
+
+		imagePart, _ := writer.CreateFormFile("image", "image.jpg")
+		io.Copy(imagePart, imageFile)
+
+		writer.Close()
+
+		req, _ := http.NewRequest(http.MethodPost, "/api/testimonials", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
 
 		res := httptest.NewRecorder()
 
