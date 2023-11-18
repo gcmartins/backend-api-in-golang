@@ -1,2 +1,2 @@
-# backend-challenge-in-golang
+# rest-api-in-golang
 This is a study project of a REST API application using GO programming language. 
